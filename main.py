@@ -1,7 +1,21 @@
 import cv2
 import os
+import math
 import numpy as np
 from shapely.geometry import box
+
+class ScalePicture:
+    def __init__(self, img):
+        self.img = img
+        self.scaled_img = None
+    def scale(self):
+        scale_percent = 30  # Процент от исходного размера
+        width = int(self.img.shape[1] * scale_percent / 100)
+        height = int(self.img.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        scaled_img = cv2.resize(self.img, dim, interpolation=cv2.INTER_AREA)
+        self.scaled_img = scaled_img
+        return self.scaled_img
 
 def is_inside(r1, r2):
     """Проверяет, содержится ли r1 (x, y, w, h) полностью внутри r2."""
@@ -11,43 +25,53 @@ def is_inside(r1, r2):
 
 def intersects(r1, r2):
     """Проверяет, пересекаются ли прямоугольники r1 и r2."""
+    intersect_y = 0.
+    intersect_x = 0.
+    stock = 1
     rect1 = box(r1[0], r1[1], r1[0] + r1[2], r1[1] + r1[3])
     rect2 = box(r2[0], r2[1], r2[0] + r2[2], r2[1] + r2[3])
-    return rect1.intersects(rect2)
+
+    up_two_one_down = r1[1] < r2[1] + r2[3] and r1[1] + r1[3] > r2[1]
+    up_one_two_down = r2[1] < r1[1] + r1[3] and r2[1] + r2[3] > r1[1]
+    if up_two_one_down:
+        intersect_y = min(math.fabs(r1[1] - r2[1] - r2[3]), math.fabs(r1[1] + r1[3] - r2[1]))
+    elif up_one_two_down:
+        intersect_y = min(math.fabs(r2[1] - r1[1] - r1[3]), math.fabs(r2[1] + r2[3] - r1[1]))
+
+    left_one_two_right = r1[0] < r2[0] + r2[2] and r1[0] + r1[2] > r2[0]
+    left_two_one_right = r2[0] < r1[0] + r1[2] and r2[0] + r2[2] > r1[0]
+    if left_one_two_right:
+        intersect_x = min(math.fabs(r1[0] - r2[0] - r2[2]), math.fabs(r1[0] + r1[2] - r2[0]))
+    elif left_two_one_right:
+        intersect_x = min(math.fabs(r2[0] - r1[0] - r1[2]), math.fabs(r2[0] + r2[2] - r1[0]))
+    print(f"intersect_y: {intersect_y} , coord_x_r1 : {r1[0]}, coord_x_r2 : {r2[0]}")
+    print(intersect_x)
+    return rect1.intersects(rect2) and (intersect_x < stock or intersect_y < stock)
 
 def area(r):
     """Возвращает площадь прямоугольника r."""
     _, _, w, h = r
     return w * h
+##################################################################################################
 
 # Загрузка изображений
-original_img = cv2.imread('Images/m1.jpg') # Замените на ваш путь к оригинальному изображению
-edited_img1 = cv2.imread('Images/m0.jpg') # Замените на ваш путь к измененному изображению
-edited_img2 = cv2.imread('Images/m2.jpg') # Замените на ваш путь к измененному изображению
-edited_img3 = cv2.imread('Images/m3.jpg') # Замените на ваш путь к измененному изображению
-
+original_img = cv2.imread('Images/m1.jpg')
+edited_img1 = cv2.imread('Images/m0.jpg')
 
 # Изменение размера edited_img для соответствия размеру original_img
-# edited_img = cv2.resize(edited_img, (original_img.shape[1], original_img.shape[0]))
+if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edited_img1[1]):
+    edited_img1 = cv2.resize(edited_img1, (original_img.shape[1], original_img.shape[0]))
 
 
 # Нахождение различий
 diff = cv2.absdiff(original_img, edited_img1)
-diff2 = cv2.absdiff(edited_img3, edited_img1)
-diff3 = cv2.absdiff(original_img, edited_img2)
-diff4 = cv2.absdiff(original_img, edited_img3)
 
-diffa = cv2.absdiff(diff, diff2)
-diffb = cv2.absdiff(diff3, diff4)
-
-diff = cv2.absdiff(diffa, diffb)
-
-
+# Смена цветовой палитры таргета
 gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
 _, thresh = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY)
 
 # Поиск контуров
-contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 # Пороговая площадь для фильтрации маленьких контуров
 area_threshold = 1000
@@ -70,11 +94,15 @@ save_path = 'dataset'
 os.makedirs(save_path, exist_ok=True)
 
 # Вырезание и сохранение областей с наклейками
+rectangle_color = (255, 235, 59)
+rectangle_line_thickness = 2
 for i, (x, y, w, h) in enumerate(final_rects):
     if w >= min_width and h >= min_height:
         roi = original_img[y:y + h, x:x + w]
         cv2.imwrite(f"{save_path}/sticker_{i}.jpg", roi)
-        cv2.rectangle(original_img, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Отрисовка прямоугольника
+        start_position = (x, y)
+        finish_position = (x + w, y + h)
+        cv2.rectangle(original_img, start_position, finish_position, rectangle_color, rectangle_line_thickness)  # Отрисовка прямоугольника
 
 # Показать и сохранить результат
 cv2.imshow('Detected Stickers', original_img)
@@ -82,16 +110,11 @@ cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-scale_percent = 30  # Процент от исходного размера
-width = int(original_img.shape[1] * scale_percent / 100)
-height = int(original_img.shape[0] * scale_percent / 100)
-dim = (width, height)
-
-# Изменение размера изображения
-resized_img = cv2.resize(original_img, dim, interpolation = cv2.INTER_AREA)
+scaler = ScalePicture(original_img)
+resized_image = scaler.scale()
 
 # Показать измененное изображение
-cv2.imshow("Output", resized_img)
+cv2.imshow("Output", resized_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
