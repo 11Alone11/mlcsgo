@@ -198,10 +198,8 @@ def area(r):
     return w * h
 
 # Загрузка изображений
-original_img = cv2.imread('Images/m1.jpg') # Замените на ваш путь к оригинальному изображению
-edited_img1 = cv2.imread('Images/m0.jpg') # Замените на ваш путь к измененному изображению
-edited_img2 = cv2.imread('Images/m2.jpg') # Замените на ваш путь к измененному изображению
-edited_img3 = cv2.imread('Images/m3.jpg') # Замените на ваш путь к измененному изображению
+original_img = cv2.imread('images/654639def5fb758611b923edwCPMChTl05.jpg') # Замените на ваш путь к оригинальному изображению
+edited_img1 = cv2.imread('images/654bca0e8164459a146e515fifiAiODi05.jpg') # Замените на ваш путь к измененному изображению
 
 
 # Изменение размера edited_img для соответствия размеру original_img
@@ -210,14 +208,7 @@ edited_img3 = cv2.imread('Images/m3.jpg') # Замените на ваш пут�
 
 # Нахождение различий
 diff = cv2.absdiff(original_img, edited_img1)
-diff2 = cv2.absdiff(edited_img3, edited_img1)
-diff3 = cv2.absdiff(original_img, edited_img2)
-diff4 = cv2.absdiff(original_img, edited_img3)
 
-diffa = cv2.absdiff(diff, diff2)
-diffb = cv2.absdiff(diff3, diff4)
-
-diff = cv2.absdiff(diffa, diffb)
 
 
 gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
