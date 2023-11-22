@@ -9,7 +9,7 @@ class ScalePicture:
         self.img = img
         self.scaled_img = None
     def scale(self):
-        scale_percent = 30  # Процент от исходного размера
+        scale_percent = 50  # Процент от исходного размера
         width = int(self.img.shape[1] * scale_percent / 100)
         height = int(self.img.shape[0] * scale_percent / 100)
         dim = (width, height)
@@ -44,9 +44,9 @@ def intersects(r1, r2):
         intersect_x = min(math.fabs(r1[0] - r2[0] - r2[2]), math.fabs(r1[0] + r1[2] - r2[0]))
     elif left_two_one_right:
         intersect_x = min(math.fabs(r2[0] - r1[0] - r1[2]), math.fabs(r2[0] + r2[2] - r1[0]))
-    print(f"intersect_y: {intersect_y} , coord_x_r1 : {r1[0]}, coord_x_r2 : {r2[0]}")
-    print(intersect_x)
-    return rect1.intersects(rect2) and (intersect_x < stock or intersect_y < stock)
+    #print(f"intersect_y: {intersect_y} , coord_x_r1 : {r1[0]}, coord_x_r2 : {r2[0]}")
+    #print(intersect_x)
+    return rect1.intersects(rect2) and not(intersect_x < stock or intersect_y < stock)
 
 def area(r):
     """Возвращает площадь прямоугольника r."""
@@ -55,8 +55,19 @@ def area(r):
 ##################################################################################################
 
 # Загрузка изображений
-original_img = cv2.imread('Images/m1.jpg')
-edited_img1 = cv2.imread('Images/m0.jpg')
+original_img = cv2.imread('Images/h8.jpg')
+edited_img1 = cv2.imread('Images/h7.jpg')
+height1, width1, _ = original_img.shape
+height1 = math.floor(height1/2)
+width1 = math.floor(width1/2)
+
+
+original_img = cv2.resize(original_img, (2000, 1600), interpolation=cv2.INTER_AREA)
+edited_img1 = cv2.resize(edited_img1, (2000, 1600), interpolation=cv2.INTER_AREA)
+
+#cv2.imshow("orig", original_img)
+#cv2.imshow("edit", edited_img1)
+
 
 # Изменение размера edited_img для соответствия размеру original_img
 if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edited_img1[1]):
@@ -87,7 +98,8 @@ final_rects = []
 for r in rects:
     # Проверка на вложенность и пересечение
     if not any(is_inside(r, other) for other in rects if r != other) and \
-       not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other):
+       not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other)\
+            and ((r[0] > 1000 and r[1] > 1000) or ((600 < r[0] < 1200) and (100 < r[1] < 300))):
         final_rects.append(r)
 
 save_path = 'dataset'
@@ -105,7 +117,7 @@ for i, (x, y, w, h) in enumerate(final_rects):
         cv2.rectangle(original_img, start_position, finish_position, rectangle_color, rectangle_line_thickness)  # Отрисовка прямоугольника
 
 # Показать и сохранить результат
-cv2.imshow('Detected Stickers', original_img)
+#cv2.imshow('Detected Stickers', original_img)
 cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
