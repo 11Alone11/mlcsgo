@@ -1,184 +1,21 @@
-# import cv2
-# import numpy as np
-#
-# # Загрузка изображений
-# sticker_img = cv2.imread('Images/ibp_money.png', cv2.IMREAD_GRAYSCALE)
-# weapon_screenshot = cv2.imread('Images/ibp_ak.jpg', cv2.IMREAD_GRAYSCALE)
-#
-# # Инициализация ORB
-# orb = cv2.ORB_create()
-#
-# # Находим ключевые точки и дескрипторы
-# keypoints1, descriptors1 = orb.detectAndCompute(sticker_img, None)
-# keypoints2, descriptors2 = orb.detectAndCompute(weapon_screenshot, None)
-#
-# # Сопоставление дескрипторов
-# bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-# matches = bf.match(descriptors1, descriptors2)
-#
-# # Сортировка совпадений по расстоянию
-# matches = sorted(matches, key = lambda x:x.distance)
-#
-# # Отображение совпадений
-# matched_img = cv2.drawMatches(sticker_img, keypoints1, weapon_screenshot, keypoints2, matches[:100], None, flags=2)
-#
-# scale_percent = 50  # Процент от исходного размера
-# width = int(matched_img.shape[1] * scale_percent / 100)
-# height = int(matched_img.shape[0] * scale_percent / 100)
-# dim = (width, height)
-#
-# # Изменение размера изображения
-# resized_img = cv2.resize(matched_img, dim, interpolation = cv2.INTER_AREA)
-#
-# # Показать измененное изображение
-# cv2.imshow("Output", resized_img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-#
-# # cv2.imshow('Matches', matched_img)
-# # cv2.waitKey(0)
-# # cv2.destroyAllWindows()
-
-# import cv2
-# import matplotlib.pyplot as plt
-#
-# # Загрузка изображений
-# sticker_img = cv2.imread('Images/ibp_money.png', cv2.IMREAD_GRAYSCALE)
-# weapon_screenshot = cv2.imread('Images/ibp_ak.jpg', cv2.IMREAD_GRAYSCALE)
-#
-# # Создание детектора ORB
-# orb = cv2.ORB_create(nfeatures=1000)  # Увеличение числа ключевых точек
-#
-#
-# # Детектирование ключевых точек и вычисление дескрипторов
-# keypoints1, descriptors1 = orb.detectAndCompute(sticker_img, None)
-# keypoints2, descriptors2 = orb.detectAndCompute(weapon_screenshot, None)
-#
-# # Сопоставление признаков
-# bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-# matches = bf.match(descriptors1, descriptors2)
-# matches = sorted(matches, key=lambda x: x.distance)
-#
-# # Визуализация сопоставления
-# matched_img = cv2.drawMatches(sticker_img, keypoints1, weapon_screenshot, keypoints2, matches[:100], None, flags=2)
-# plt.imshow(matched_img)
-# plt.show()
-
-# import cv2
-# import numpy as np
-# import matplotlib.pyplot as plt
-#
-# # Загрузка изображений
-# sticker_img = cv2.imread('Images/ibp_money.png', cv2.IMREAD_GRAYSCALE)
-# weapon_screenshot = cv2.imread('Images/ibp_2.jpg', cv2.IMREAD_GRAYSCALE)
-#
-# # Инициализация SIFT
-# sift = cv2.SIFT_create()
-#
-# # Нахождение ключевых точек и дескрипторов с SIFT
-# keypoints1, descriptors1 = sift.detectAndCompute(sticker_img, None)
-# keypoints2, descriptors2 = sift.detectAndCompute(weapon_screenshot, None)
-#
-# # Использование FLANN для сопоставления дескрипторов
-# FLANN_INDEX_KDTREE = 1
-# index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-# search_params = dict(checks = 50)
-#
-# flann = cv2.FlannBasedMatcher(index_params, search_params)
-# matches = flann.knnMatch(descriptors1, descriptors2, k=2)
-#
-# # Lowe's ratio test для фильтрации хороших сопоставлений
-# good_matches = []
-# for m, n in matches:
-#     if m.distance < 0.8 * n.distance:
-#         good_matches.append(m)
-#
-# # Нахождение гомографии
-# if len(good_matches) > 4:
-#     src_pts = np.float32([ keypoints1[m.queryIdx].pt for m in good_matches ]).reshape(-1,1,2)
-#     dst_pts = np.float32([ keypoints2[m.trainIdx].pt for m in good_matches ]).reshape(-1,1,2)
-#
-#     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
-#     matchesMask = mask.ravel().tolist()
-#
-#     # Визуализация
-#     draw_params = dict(matchColor = (0,255,0),
-#                        singlePointColor = None,
-#                        matchesMask = matchesMask,
-#                        flags = 2)
-#     matched_img = cv2.drawMatches(sticker_img, keypoints1, weapon_screenshot, keypoints2, good_matches, None, **draw_params)
-#     plt.imshow(matched_img, 'gray')
-#     plt.show()
-# else:
-#     print("Недостаточно хороших сопоставлений - %d/%d" % (len(good_matches), 4))
-
-
-
-# import cv2
-#
-# # Загрузка изображений
-# sticker_img = cv2.imread('Images/ibp_money.png', cv2.IMREAD_GRAYSCALE)
-# weapon_screenshot = cv2.imread('Images/ibp_ak.jpg', cv2.IMREAD_GRAYSCALE)
-#
-# # Создание BRISK детектора
-# brisk = cv2.BRISK_create()
-#
-# # Нахождение ключевых точек и дескрипторов
-# keypoints1, descriptors1 = brisk.detectAndCompute(sticker_img, None)
-# keypoints2, descriptors2 = brisk.detectAndCompute(weapon_screenshot, None)
-#
-# # Сопоставление с использованием KNN
-# bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-# matches = bf.match(descriptors1, descriptors2)
-# matches = sorted(matches, key = lambda x:x.distance)
-#
-# # Отображение результатов
-# matched_img = cv2.drawMatches(sticker_img, keypoints1, weapon_screenshot, keypoints2, matches[:10], None, flags=2)
-#
-#
-# scale_percent = 50  # Процент от исходного размера
-# width = int(matched_img.shape[1] * scale_percent / 100)
-# height = int(matched_img.shape[0] * scale_percent / 100)
-# dim = (width, height)
-#
-# # Изменение размера изображения
-# resized_img = cv2.resize(matched_img, dim, interpolation = cv2.INTER_AREA)
-#
-# # Показать измененное изображение
-# cv2.imshow("Output", resized_img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-#
-# import cv2
-# import numpy as np
-#
-# # Загрузка изображений
-# original_img = cv2.imread('Images/ibp_ak.jpg') # Замените на ваш путь к оригинальному изображению
-# edited_img = cv2.imread('Images/unc.jpg') # Замените на ваш путь к измененному изображению
-#
-# # Вычисление разницы
-# diff = cv2.absdiff(original_img, edited_img)
-# gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-# _, thresh = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY)
-#
-# # Поиск контуров
-# contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-#
-# # Выделение областей на оригинальном изображении
-# for contour in contours:
-#     if cv2.contourArea(contour) > 100:  # Минимальный размер области
-#         x, y, w, h = cv2.boundingRect(contour)
-#         cv2.rectangle(original_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-#
-# # Показать результат
-# cv2.imshow('Detected Stickers', original_img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
 import cv2
 import os
+import math
 import numpy as np
 from shapely.geometry import box
+
+class ScalePicture:
+    def __init__(self, img):
+        self.img = img
+        self.scaled_img = None
+    def scale(self):
+        scale_percent = 30  # Процент от исходного размера
+        width = int(self.img.shape[1] * scale_percent / 100)
+        height = int(self.img.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        scaled_img = cv2.resize(self.img, dim, interpolation=cv2.INTER_AREA)
+        self.scaled_img = scaled_img
+        return self.scaled_img
 
 def is_inside(r1, r2):
     """Проверяет, содержится ли r1 (x, y, w, h) полностью внутри r2."""
@@ -188,34 +25,53 @@ def is_inside(r1, r2):
 
 def intersects(r1, r2):
     """Проверяет, пересекаются ли прямоугольники r1 и r2."""
+    intersect_y = 0.
+    intersect_x = 0.
+    stock = 1
     rect1 = box(r1[0], r1[1], r1[0] + r1[2], r1[1] + r1[3])
     rect2 = box(r2[0], r2[1], r2[0] + r2[2], r2[1] + r2[3])
-    return rect1.intersects(rect2)
+
+    up_two_one_down = r1[1] < r2[1] + r2[3] and r1[1] + r1[3] > r2[1]
+    up_one_two_down = r2[1] < r1[1] + r1[3] and r2[1] + r2[3] > r1[1]
+    if up_two_one_down:
+        intersect_y = min(math.fabs(r1[1] - r2[1] - r2[3]), math.fabs(r1[1] + r1[3] - r2[1]))
+    elif up_one_two_down:
+        intersect_y = min(math.fabs(r2[1] - r1[1] - r1[3]), math.fabs(r2[1] + r2[3] - r1[1]))
+
+    left_one_two_right = r1[0] < r2[0] + r2[2] and r1[0] + r1[2] > r2[0]
+    left_two_one_right = r2[0] < r1[0] + r1[2] and r2[0] + r2[2] > r1[0]
+    if left_one_two_right:
+        intersect_x = min(math.fabs(r1[0] - r2[0] - r2[2]), math.fabs(r1[0] + r1[2] - r2[0]))
+    elif left_two_one_right:
+        intersect_x = min(math.fabs(r2[0] - r1[0] - r1[2]), math.fabs(r2[0] + r2[2] - r1[0]))
+    print(f"intersect_y: {intersect_y} , coord_x_r1 : {r1[0]}, coord_x_r2 : {r2[0]}")
+    print(intersect_x)
+    return rect1.intersects(rect2) and (intersect_x < stock or intersect_y < stock)
 
 def area(r):
     """Возвращает площадь прямоугольника r."""
     _, _, w, h = r
     return w * h
+##################################################################################################
 
 # Загрузка изображений
-original_img = cv2.imread('images/654639def5fb758611b923edwCPMChTl05.jpg') # Замените на ваш путь к оригинальному изображению
-edited_img1 = cv2.imread('images/654bca0e8164459a146e515fifiAiODi05.jpg') # Замените на ваш путь к измененному изображению
-
+original_img = cv2.imread('Images/m1.jpg')
+edited_img1 = cv2.imread('Images/m0.jpg')
 
 # Изменение размера edited_img для соответствия размеру original_img
-# edited_img = cv2.resize(edited_img, (original_img.shape[1], original_img.shape[0]))
+if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edited_img1[1]):
+    edited_img1 = cv2.resize(edited_img1, (original_img.shape[1], original_img.shape[0]))
 
 
 # Нахождение различий
 diff = cv2.absdiff(original_img, edited_img1)
 
-
-
+# Смена цветовой палитры таргета
 gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
 _, thresh = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY)
 
 # Поиск контуров
-contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 # Пороговая площадь для фильтрации маленьких контуров
 area_threshold = 1000
@@ -238,11 +94,15 @@ save_path = 'dataset'
 os.makedirs(save_path, exist_ok=True)
 
 # Вырезание и сохранение областей с наклейками
+rectangle_color = (255, 235, 59)
+rectangle_line_thickness = 2
 for i, (x, y, w, h) in enumerate(final_rects):
     if w >= min_width and h >= min_height:
         roi = original_img[y:y + h, x:x + w]
         cv2.imwrite(f"{save_path}/sticker_{i}.jpg", roi)
-        cv2.rectangle(original_img, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Отрисовка прямоугольника
+        start_position = (x, y)
+        finish_position = (x + w, y + h)
+        cv2.rectangle(original_img, start_position, finish_position, rectangle_color, rectangle_line_thickness)  # Отрисовка прямоугольника
 
 # Показать и сохранить результат
 cv2.imshow('Detected Stickers', original_img)
@@ -250,19 +110,13 @@ cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-scale_percent = 30  # Процент от исходного размера
-width = int(original_img.shape[1] * scale_percent / 100)
-height = int(original_img.shape[0] * scale_percent / 100)
-dim = (width, height)
-
-# Изменение размера изображения
-resized_img = cv2.resize(original_img, dim, interpolation = cv2.INTER_AREA)
+scaler = ScalePicture(original_img)
+resized_image = scaler.scale()
 
 # Показать измененное изображение
-cv2.imshow("Output", resized_img)
+cv2.imshow("Output", resized_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
 
 
 

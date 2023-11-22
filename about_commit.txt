@@ -1,0 +1,2 @@
+Started developing a pixel-to-pixel comparison module (PtPC-module) 22/11/2023
+	Started developing a scale picture module (ScalePicture-module) 22/11/2023
