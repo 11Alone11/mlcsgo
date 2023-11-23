@@ -88,10 +88,23 @@ def area(r):
 
 # Загрузка изображений
 
+original_img = cv2.imread('Images/h8.jpg')
+edited_img1 = cv2.imread('Images/h7.jpg')
+height1, width1, _ = original_img.shape
+height1 = math.floor(height1/2)
+width1 = math.floor(width1/2)
+
 original_img = cv2.imread('Images/h4.jpg')
 edited_img1 = cv2.imread('Images/h3.jpg')
 
+
 original_img, edited_img1 = ScalePicture(original_img, edited_img1).scaleBoth()
+original_img = cv2.resize(original_img, (2000, 1600), interpolation=cv2.INTER_AREA)
+edited_img1 = cv2.resize(edited_img1, (2000, 1600), interpolation=cv2.INTER_AREA)
+
+#cv2.imshow("orig", original_img)
+#cv2.imshow("edit", edited_img1)
+
 
 # Изменение размера edited_img для соответствия размеру original_img
 if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edited_img1[1]):
@@ -99,6 +112,7 @@ if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edite
 
 # Нахождение различий
 diff = cv2.absdiff(original_img, edited_img1)
+
 alfa = ScalePicture(diff).scaleFirst()
 cv2.imshow("Difference", alfa)
 cv2.waitKey(0)
