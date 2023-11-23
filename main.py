@@ -88,23 +88,10 @@ def area(r):
 
 # Загрузка изображений
 
-original_img = cv2.imread('Images/h8.jpg')
-edited_img1 = cv2.imread('Images/h7.jpg')
-height1, width1, _ = original_img.shape
-height1 = math.floor(height1/2)
-width1 = math.floor(width1/2)
-
 original_img = cv2.imread('Images/h4.jpg')
 edited_img1 = cv2.imread('Images/h3.jpg')
 
-
 original_img, edited_img1 = ScalePicture(original_img, edited_img1).scaleBoth()
-original_img = cv2.resize(original_img, (2000, 1600), interpolation=cv2.INTER_AREA)
-edited_img1 = cv2.resize(edited_img1, (2000, 1600), interpolation=cv2.INTER_AREA)
-
-#cv2.imshow("orig", original_img)
-#cv2.imshow("edit", edited_img1)
-
 
 # Изменение размера edited_img для соответствия размеру original_img
 if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edited_img1[1]):
@@ -139,7 +126,8 @@ final_rects = []
 # Проверка на вложенность и пересечение
 for r in rects:
     if not any(is_inside(r, other) for other in rects if r != other) and \
-            not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other):
+            not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other)\
+            and ((r[0] > 0.7 * r[1] or r[0] > 1.3 * r[1]) and (r[0] > 0.7 * math.sqrt(area(r)) or r[0] > 1.3 * math.sqrt(area(r)))):
         final_rects.append(r)
 
 #and ((r[0] > 1000 and r[1] > 1000) or ((600 < r[0] < 1200) and (100 < r[1] < 300))) <<< buff staff
@@ -159,15 +147,12 @@ for i, (x, y, w, h) in enumerate(final_rects):
         cv2.rectangle(original_img, start_position, finish_position, rectangle_color,
                       rectangle_line_thickness)  # Отрисовка прямоугольника
 
-# Показать и сохранить результат
+#Сохранить результат
 cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-scaler = ScalePicture(original_img)
-resized_image = scaler.scaleFirst()
 
 # Показать измененное изображение
+resized_image = ScalePicture(original_img).scaleFirst()
 cv2.imshow("Output", resized_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
