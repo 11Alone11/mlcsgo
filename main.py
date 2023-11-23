@@ -3,7 +3,8 @@ import os
 import math
 import numpy as np
 from shapely.geometry import box
-
+import matplotlib.pyplot as plt
+import glob
 def correlate(Result_input_path, stickers_data):
     if not os.path.exists(Result_input_path):
         print("No result directory")
@@ -31,13 +32,13 @@ def correlate(Result_input_path, stickers_data):
             gray_image = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
             _, binary_image = cv2.threshold(gray_image, 1, 255, cv2.THRESH_BINARY)
             black_pixel_count = cv2.countNonZero(binary_image)
-            if sticker_name == "lurker_foil.png":
-                cv2.imshow(f"{i}   {sticker_name}", ScalePicture(diff).scaleFirst_delete())
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-                cv2.imshow(f"{black_pixel_count}   {sticker_name}", gray_image)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
+            #if sticker_name == "lurker_foil.png":
+            #    cv2.imshow(f"{i}   {sticker_name}", ScalePicture(diff).scaleFirst_delete())
+            #    cv2.waitKey(0)
+            #    cv2.destroyAllWindows()
+            #    cv2.imshow(f"{black_pixel_count}   {sticker_name}", gray_image)
+            #    cv2.waitKey(0)
+            #    cv2.destroyAllWindows()
             #cv2.countNonZero(cv2.bitwise_not(diff))
             probability[i][j] = black_pixel_count / (diff_width * diff_height)
             sticker_names[i][j] = sticker_name
@@ -55,9 +56,9 @@ def saver_drawer(probability, sticker_names):
         sticker_name = sticker_names[i][max_index]
         cv2.imwrite(f"finally/{i}_{sticker_name}_{max_prob}.jpg", image_target)
         image_target = ScalePicture(image_target).scaleFirst_delete()
-        cv2.imshow(f"{i}_{sticker_name}_{max_prob}", image_target)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        #cv2.imshow(f"{i}_{sticker_name}_{max_prob}", image_target)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
         i += 1
 
 class ScalePicture:
@@ -222,9 +223,26 @@ stickers_data = 'stickers_modifed'
 a, b = correlate(Result_input_path, stickers_data)
 saver_drawer(a, b)
 
-# Показать измененное изображение
-#resized_image = ScalePicture(original_img).scaleFirst()
-#cv2.imshow("Output", resized_image)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
+# Путь к папке с изображениями
+image_folder = 'finally/'
 
+# Получение списка файлов изображений в папке
+image_paths = glob.glob(image_folder + '*.jpg')
+
+# Загрузка изображений и их названий
+images = [cv2.imread(image_path) for image_path in image_paths]
+image_names = [image_path.split('/')[-1] for image_path in image_paths]
+
+# Определение размера изображений и создание фигуры с подходящим размером
+num_images = len(images)
+fig, axes = plt.subplots(1, num_images, figsize=(5*num_images, 5))
+
+# Перебор изображений и их названий и их отображение
+for i in range(num_images):
+    axes[i].imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))
+    axes[i].set_title(image_names[i])
+    axes[i].axis('off')
+
+# Отображение скролящегося интерфейса с изображениями
+plt.tight_layout()
+plt.show()
