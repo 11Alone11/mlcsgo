@@ -1,3 +1,5 @@
+from tkinter import filedialog
+
 import cv2
 import os
 import math
@@ -5,6 +7,8 @@ import numpy as np
 from shapely.geometry import box
 import matplotlib.pyplot as plt
 import glob
+import pyperclip
+import tkinter as tk
 def correlate(Result_input_path, stickers_data):
     if not os.path.exists(Result_input_path):
         print("No result directory")
@@ -162,8 +166,46 @@ def area(r):
 ##################################################################################################
 
 # Загрузка изображений
+original_img = None
+def open_image():
+    global original_img
+    # Открытие диалогового окна для выбора файла или вставки изображения из буфера обмена
+    file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png *.jpg *.jpeg")])
 
-original_img = cv2.imread('Images/h4.jpg')
+    # Если файл не был выбран, попытка получить данные из буфера обмена
+    if not file_path:
+        clipboard_data = pyperclip.paste()
+        if clipboard_data.startswith('data:image'):
+            file_path = 'clipboard_image.png'
+            with open(file_path, 'wb') as f:
+                f.write(pyperclip.paste().split(',')[1].decode('base64'))
+
+    # Проверка, что файл был выбран или данные из буфера обмена были получены
+    if file_path:
+        # Проверка формата файла на изображение
+        image_formats = ['png', 'jpg', 'jpeg']
+        file_ext = file_path.lower().split('.')[-1]
+        if file_ext in image_formats:
+            # Загрузка изображения
+            original_img = cv2.imread(file_path)
+        else:
+            result_label.config(text="Выбранный файл или данные из буфера обмена не являются изображением.")
+    else:
+        result_label.config(text="Файл или данные из буфера обмена не выбраны.")
+
+
+# Создание графического интерфейса с кнопкой "Открыть изображение" и меткой для вывода результата
+root = tk.Tk()
+root.title("Открыть изображение")
+
+button = tk.Button(root, text="Открыть изображение", command=open_image)
+button.pack()
+
+result_label = tk.Label(root, text="")
+result_label.pack()
+
+root.mainloop()
+#original_img = cv2.imread('Images/h4.jpg')
 edited_img1 = cv2.imread('Images/h3.jpg')
 
 original_img, edited_img1 = ScalePicture(original_img, edited_img1).scaleBoth()
@@ -202,7 +244,7 @@ final_rects = []
 for r in rects:
     if not any(is_inside(r, other) for other in rects if r != other) and \
             not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other)\
-            and ((r[0] > 0.7 * r[1] or r[0] > 1.3 * r[1]) and (r[0] > 0.7 * math.sqrt(area(r)) or r[0] > 1.3 * math.sqrt(area(r)))):
+            and ((r[0] > 0.9 * r[1] or r[0] > 1.1 * r[1]) and (r[0] > 0.9 * math.sqrt(area(r)) or r[0] > 1.1 * math.sqrt(area(r)))):
         final_rects.append(r)
 
 #and ((r[0] > 1000 and r[1] > 1000) or ((600 < r[0] < 1200) and (100 < r[1] < 300))) <<< buff staff
