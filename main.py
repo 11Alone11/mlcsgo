@@ -4,6 +4,61 @@ import math
 import numpy as np
 from shapely.geometry import box
 
+def correlate(Result_input_path, stickers_data):
+    if not os.path.exists(Result_input_path):
+        print("No result directory")
+        return
+
+    sticker_list = os.listdir(stickers_data)
+    num_stickers = len(sticker_list)
+
+    probability = np.zeros((len(os.listdir(Result_input_path)), num_stickers))
+    sticker_names = np.empty((len(os.listdir(Result_input_path)), num_stickers), dtype=object)
+
+    i = 0
+    for sticker_found in os.listdir(Result_input_path):
+        image_target = cv2.imread(f"{Result_input_path}/{sticker_found}")
+        j = 0
+        for sticker_base in sticker_list:
+            sticker_path = os.path.join(stickers_data, sticker_base)
+            sticker_name = os.path.basename(sticker_path)
+            sticker = cv2.imread(sticker_path)
+
+            a, b = ScalePicture(image_target, sticker).scaleBoth()
+            diff = cv2.absdiff(a, b)
+            diff_height, diff_width = diff.shape[:2]
+
+            gray_image = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+            _, binary_image = cv2.threshold(gray_image, 1, 255, cv2.THRESH_BINARY)
+            black_pixel_count = cv2.countNonZero(binary_image)
+            if sticker_name == "lurker_foil.png":
+                cv2.imshow(f"{i}   {sticker_name}", ScalePicture(diff).scaleFirst_delete())
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+                cv2.imshow(f"{black_pixel_count}   {sticker_name}", gray_image)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+            #cv2.countNonZero(cv2.bitwise_not(diff))
+            probability[i][j] = black_pixel_count / (diff_width * diff_height)
+            sticker_names[i][j] = sticker_name
+            j += 1
+        i += 1
+
+    return probability, sticker_names
+
+def saver_drawer(probability, sticker_names):
+    i = 0
+    for sticker_found in os.listdir(Result_input_path):
+        image_target = cv2.imread(f"{Result_input_path}/{sticker_found}")
+        max_index = np.argmax(probability[i])
+        max_prob = probability[i][max_index]
+        sticker_name = sticker_names[i][max_index]
+        cv2.imwrite(f"finally/{i}_{sticker_name}_{max_prob}.jpg", image_target)
+        image_target = ScalePicture(image_target).scaleFirst_delete()
+        cv2.imshow(f"{i}_{sticker_name}_{max_prob}", image_target)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        i += 1
 
 class ScalePicture:
     def __init__(self, img_1, img_2=None):
@@ -11,6 +66,15 @@ class ScalePicture:
         self.img_2 = img_2
         self.scaled_img_1 = None
         self.scaled_img_2 = None
+
+    def scaleFirst_delete(self):
+        scale_percent = 400  # Процент от исходного размера
+        width = int(self.img_1.shape[1] * scale_percent / 100)
+        height = int(self.img_1.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        scaled_img_1 = cv2.resize(self.img_1, dim, interpolation=cv2.INTER_AREA)
+        self.scaled_img_1 = scaled_img_1
+        return self.scaled_img_1
 
     def scaleFirst(self):
         scale_percent = 50  # Процент от исходного размера
@@ -148,11 +212,19 @@ for i, (x, y, w, h) in enumerate(final_rects):
                       rectangle_line_thickness)  # Отрисовка прямоугольника
 
 #Сохранить результат
-cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
+##cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
+cv2.imshow("Detected", ScalePicture(original_img).scaleFirst())
+cv2.waitKey(0)
+
+Result_input_path = 'found'
+stickers_data = 'stickers_modifed'
+
+a, b = correlate(Result_input_path, stickers_data)
+saver_drawer(a, b)
 
 # Показать измененное изображение
-resized_image = ScalePicture(original_img).scaleFirst()
-cv2.imshow("Output", resized_image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+#resized_image = ScalePicture(original_img).scaleFirst()
+#cv2.imshow("Output", resized_image)
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
