@@ -24,23 +24,18 @@ def correlate(Result_input_path, stickers_data):
             sticker_path = os.path.join(stickers_data, sticker_base)
             sticker_name = os.path.basename(sticker_path)
             sticker = cv2.imread(sticker_path)
-
             a, b = ScalePicture(image_target, sticker).scaleBoth()
-            diff = cv2.absdiff(a, b)
-            diff_height, diff_width = diff.shape[:2]
-
-            gray_image = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-            _, binary_image = cv2.threshold(gray_image, 1, 255, cv2.THRESH_BINARY)
-            black_pixel_count = cv2.countNonZero(binary_image)
-            #if sticker_name == "lurker_foil.png":
-            #    cv2.imshow(f"{i}   {sticker_name}", ScalePicture(diff).scaleFirst_delete())
-            #    cv2.waitKey(0)
-            #    cv2.destroyAllWindows()
-            #    cv2.imshow(f"{black_pixel_count}   {sticker_name}", gray_image)
-            #    cv2.waitKey(0)
-            #    cv2.destroyAllWindows()
-            #cv2.countNonZero(cv2.bitwise_not(diff))
-            probability[i][j] = black_pixel_count / (diff_width * diff_height)
+            # Преобразование изображений из BGR в RGB (для отображения с помощью matplotlib)
+            a = cv2.cvtColor(a, cv2.COLOR_BGR2RGB)
+            b = cv2.cvtColor(b, cv2.COLOR_BGR2RGB)
+            # Вычисление гистограмм цветовых каналов для каждого изображения
+            histogram1 = cv2.calcHist([a], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
+            histogram2 = cv2.calcHist([b], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
+            # Нормализация гистограмм
+            cv2.normalize(histogram1, histogram1, 0, 1, cv2.NORM_MINMAX)
+            cv2.normalize(histogram2, histogram2, 0, 1, cv2.NORM_MINMAX)
+            # Вычисление коэффициента корреляции Хистограмм
+            probability[i][j] = cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
             sticker_names[i][j] = sticker_name
             j += 1
         i += 1
