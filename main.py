@@ -24,6 +24,7 @@ def correlate(Result_input_path, stickers_data):
             sticker_path = os.path.join(stickers_data, sticker_base)
             sticker_name = os.path.basename(sticker_path)
             sticker = cv2.imread(sticker_path)
+            sticker = ScalePicture(sticker).scaleShacal()
             a, b = ScalePicture(image_target, sticker).scaleBoth()
             # Преобразование изображений из BGR в RGB (для отображения с помощью matplotlib)
             a = cv2.cvtColor(a, cv2.COLOR_BGR2RGB)
@@ -72,6 +73,20 @@ class ScalePicture:
         self.scaled_img_1 = scaled_img_1
         return self.scaled_img_1
 
+    def scaleShacal(self):
+        scale_percent = 5  # Процент от исходного размера
+        width = int(self.img_1.shape[1] * scale_percent / 100)
+        height = int(self.img_1.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        scaled_img_1 = cv2.resize(self.img_1, dim, interpolation=cv2.INTER_AREA)
+        self.scaled_img_1 = scaled_img_1
+        scale_percent = 1000 / scale_percent  # Процент от исходного размера
+        width = int(self.scaled_img_1.shape[1] * scale_percent / 100)
+        height = int(self.scaled_img_1.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        scaled_img_1 = cv2.resize(self.scaled_img_1, dim, interpolation=cv2.INTER_AREA)
+        self.scaled_img_1 = scaled_img_1
+        return self.scaled_img_1
     def scaleFirst(self):
         scale_percent = 50  # Процент от исходного размера
         width = int(self.img_1.shape[1] * scale_percent / 100)
@@ -161,9 +176,9 @@ if np.any(original_img[0] != edited_img1[0]) and np.any(original_img[1] != edite
 diff = cv2.absdiff(original_img, edited_img1)
 
 alfa = ScalePicture(diff).scaleFirst()
-cv2.imshow("Difference", alfa)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+#cv2.imshow("Difference", alfa)
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
 # Смена цветовой палитры таргета
 gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
@@ -209,8 +224,8 @@ for i, (x, y, w, h) in enumerate(final_rects):
 
 #Сохранить результат
 ##cv2.imwrite(f"{save_path}/detected_stickers.jpg", original_img)
-cv2.imshow("Detected", ScalePicture(original_img).scaleFirst())
-cv2.waitKey(0)
+#cv2.imshow("Detected", ScalePicture(original_img).scaleFirst())
+#cv2.waitKey(0)
 
 Result_input_path = 'found'
 stickers_data = 'stickers_modifed'
