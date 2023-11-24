@@ -3,6 +3,7 @@ import shutil
 
 a = "found"
 b = "dataset"
+c = "finally"
 
 def clear_folder(folder_path):
     # Проверка существования папки
@@ -20,3 +21,4 @@ def clear_folder(folder_path):
 
 clear_folder(a)
 clear_folder(b)
+clear_folder(c)

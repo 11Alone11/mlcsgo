@@ -7,8 +7,70 @@ import numpy as np
 from shapely.geometry import box
 import matplotlib.pyplot as plt
 import glob
+import ClearFoundAndDataset
 import pyperclip
 import tkinter as tk
+import tkinter as tk
+from tkinter import Canvas, Button
+from PIL import Image, ImageTk, ImageGrab
+import numpy as np
+import cv2
+
+import tkinter as tk
+from tkinter import Canvas, Button, Scrollbar, Frame
+from PIL import Image, ImageTk, ImageGrab
+import numpy as np
+import cv2
+
+def paste_image_from_clipboard():
+    global original_img
+
+    try:
+        # Получение изображения из буфера обмена
+        image = ImageGrab.grabclipboard()
+        if isinstance(image, Image.Image):
+            # Преобразование изображения PIL в формат OpenCV
+            original_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+            # Обновление холста с новым изображением
+            update_canvas(image)
+        else:
+            print("Буфер обмена не содержит изображения")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def update_canvas(image):
+    """Обновляет холст с новым изображением."""
+    photo = ImageTk.PhotoImage(image)
+    canvas.config(scrollregion=(0, 0, image.width, image.height))
+    canvas.create_image(0, 0, image=photo, anchor='nw')
+    canvas.image = photo  # Сохранение ссылки на изображение
+
+# Создание главного окна
+root = tk.Tk()
+root.title("Paste Image from Clipboard")
+
+# Создание фрейма для размещения холста и полос прокрутки
+frame = Frame(root)
+frame.pack(fill='both', expand=True)
+
+# Создание холста
+canvas = Canvas(frame)
+canvas.pack(side='left', fill='both', expand=True)
+
+# Добавление полос прокрутки
+h_scroll = Scrollbar(frame, orient='horizontal', command=canvas.xview)
+h_scroll.pack(side='bottom', fill='x')
+v_scroll = Scrollbar(frame, orient='vertical', command=canvas.yview)
+v_scroll.pack(side='right', fill='y')
+canvas.config(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+
+# Кнопка для вставки изображения из буфера обмена
+paste_button = Button(root, text="Вставить изображение", command=paste_image_from_clipboard)
+paste_button.pack()
+
+root.mainloop()
+
 def correlate(Result_input_path, stickers_data):
     if not os.path.exists(Result_input_path):
         print("No result directory")
@@ -41,10 +103,10 @@ def correlate(Result_input_path, stickers_data):
             #cv2.normalize(histogram2, histogram2, 0, 1, cv2.NORM_MINMAX)
             # Вычисление коэффициента корреляции Хистограмм
             win_size = 3
-            probability[i][j] = metrics.structural_similarity(a, b, win_size=win_size, data_range=1)#cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
+            probability[i][j] = metrics.structural_similarity(b, a, win_size=win_size, data_range=255)#cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
             sticker_names[i][j] = sticker_name
             j += 1
-        probability[i, :] /= np.max(probability[i, :])
+        # probability[i, :] /= np.max(probability[i, :])
         i += 1
 
     return probability, sticker_names
@@ -56,7 +118,7 @@ def saver_drawer(probability, sticker_names):
         max_index = np.argmax(probability[i])
         max_prob = probability[i][max_index]
         sticker_name = sticker_names[i][max_index]
-        cv2.imwrite(f"finally/{i}_{sticker_name}_{max_prob}.jpg", image_target)
+        cv2.imwrite(f"finally/{i}_{sticker_name[:-4]}_{max_prob}.jpg", image_target)
         image_target = ScalePicture(image_target).scaleFirst_delete()
         #cv2.imshow(f"{i}_{sticker_name}_{max_prob}", image_target)
         #cv2.waitKey(0)
@@ -167,8 +229,9 @@ def area(r):
 #################################################################################################
 
 # Загрузка изображений
-
-original_img = cv2.imread('Images/h4.jpg')
+ClearFoundAndDataset.clear_folder("finally")
+ClearFoundAndDataset.clear_folder("found")
+# original_img = cv2.imread('Images/h4.jpg')
 edited_img1 = cv2.imread('Images/h3.jpg')
 
 original_img, edited_img1 = ScalePicture(original_img, edited_img1).scaleBoth()
@@ -243,18 +306,32 @@ image_paths = glob.glob(image_folder + '*.jpg')
 
 # Загрузка изображений и их названий
 images = [cv2.imread(image_path) for image_path in image_paths]
-image_names = [image_path.split('/')[-1] for image_path in image_paths]
+image_names = [os.path.splitext(os.path.basename(image_path))[0] for image_path in image_paths]
 
-# Определение размера изображений и создание фигуры с подходящим размером
 num_images = len(images)
-fig, axes = plt.subplots(1, num_images, figsize=(5*num_images, 5))
-print(len(axes))
-cv2.waitKey(0)
+rows = 3  # Фиксированное количество строк
+cols = math.ceil(num_images / rows)  # Вычисление необходимого количества столбцов
+
+fig, axes = plt.subplots(rows, cols, figsize=(20, 10))  # Изменен размер фигуры
+axes = np.array(axes).reshape(rows, -1)
+
+# Создание фигуры с подходящим размером
+# fig, axes = plt.subplots(rows, cols, figsize=(5*cols, 5*rows))
+# axes = np.array(axes).reshape(rows, -1)  # Преобразование axes в двумерный массив
+
 # Перебор изображений и их названий и их отображение
-for i in range(num_images):
-    axes[i].imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))
-    axes[i].set_title(image_names[i])
-    axes[i].axis('off')
+for i in range(rows):
+    for j in range(cols):
+        idx = i * cols + j
+        if idx < num_images:
+            axes[i, j].imshow(cv2.cvtColor(images[idx], cv2.COLOR_BGR2RGB))
+            axes[i, j].set_title(f"{image_names[idx]}")
+            axes[i, j].axis('off')
+        else:
+            axes[i, j].axis('off')  # Скрыть пустые подграфики
+
+plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, hspace=0.4, wspace=0.4)
+plt.tight_layout(pad=4.0)
 
 # Отображение скролящегося интерфейса с изображениями
 plt.tight_layout()
