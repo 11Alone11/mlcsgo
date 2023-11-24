@@ -1,5 +1,5 @@
 from tkinter import filedialog
-from skimage import metrics
+from skimage import metrics, color
 import cv2
 import os
 import math
@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import glob
 import pyperclip
 import tkinter as tk
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
 def correlate(Result_input_path, stickers_data):
     if not os.path.exists(Result_input_path):
         print("No result directory")
@@ -33,8 +31,8 @@ def correlate(Result_input_path, stickers_data):
             sticker = ScalePicture(sticker).scaleShacal()
             a, b = ScalePicture(image_target, sticker).scaleBoth()
             # Преобразование изображений из BGR в RGB (для отображения с помощью matplotlib)
-            a = cv2.cvtColor(a, cv2.COLOR_BGR2RGB)
-            b = cv2.cvtColor(b, cv2.COLOR_BGR2RGB)
+            cv2.cvtColor(a, cv2.COLOR_BGR2RGB)
+            cv2.cvtColor(b, cv2.COLOR_BGR2RGB)
             # Вычисление гистограмм цветовых каналов для каждого изображения
             #histogram1 = cv2.calcHist([a], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
             #histogram2 = cv2.calcHist([b], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
@@ -43,7 +41,7 @@ def correlate(Result_input_path, stickers_data):
             #cv2.normalize(histogram2, histogram2, 0, 1, cv2.NORM_MINMAX)
             # Вычисление коэффициента корреляции Хистограмм
             win_size = 3
-            probability[i][j] = sigmoid(metrics.structural_similarity(a, b, win_size=win_size))#cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
+            probability[i][j] = metrics.structural_similarity(a, b, win_size=win_size, data_range=1)#cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
             sticker_names[i][j] = sticker_name
             j += 1
         i += 1
@@ -207,11 +205,8 @@ final_rects = []
 # Проверка на вложенность и пересечение
 for r in rects:
     if not any(is_inside(r, other) for other in rects if r != other) and \
-            not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other)\
-            and ((r[0] > 0.9 * r[1] or r[0] < 1.1 * r[1]) and (r[0] > 0.9 * math.sqrt(area(r)) or r[0] < 1.1 * math.sqrt(area(r)))):
+            not any(intersects(r, other) and area(other) > area(r) for other in rects if r != other):
         final_rects.append(r)
-
-#and ((r[0] > 1000 and r[1] > 1000) or ((600 < r[0] < 1200) and (100 < r[1] < 300))) <<< buff staff
 
 save_path = 'found'
 os.makedirs(save_path, exist_ok=True)
@@ -252,7 +247,8 @@ image_names = [image_path.split('/')[-1] for image_path in image_paths]
 # Определение размера изображений и создание фигуры с подходящим размером
 num_images = len(images)
 fig, axes = plt.subplots(1, num_images, figsize=(5*num_images, 5))
-
+print(len(axes))
+cv2.waitKey(0)
 # Перебор изображений и их названий и их отображение
 for i in range(num_images):
     axes[i].imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))
