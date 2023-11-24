@@ -44,6 +44,7 @@ def correlate(Result_input_path, stickers_data):
             probability[i][j] = metrics.structural_similarity(a, b, win_size=win_size, data_range=1)#cv2.compareHist(histogram1, histogram2, cv2.HISTCMP_CORREL)
             sticker_names[i][j] = sticker_name
             j += 1
+        probability[i, :] /= np.max(probability[i, :])
         i += 1
 
     return probability, sticker_names
@@ -167,7 +168,7 @@ def area(r):
 
 # Загрузка изображений
 
-original_img = cv2.imread('Images/h6.jpg')
+original_img = cv2.imread('Images/h4.jpg')
 edited_img1 = cv2.imread('Images/h3.jpg')
 
 original_img, edited_img1 = ScalePicture(original_img, edited_img1).scaleBoth()

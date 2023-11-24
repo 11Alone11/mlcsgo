@@ -25,7 +25,7 @@ def enhance_image(target):
     return equalized_image
 
 # Загрузка фотографии target
-target = cv2.imread('found/sticker_0.jpg')
+target = cv2.imread('found/sticker_13.jpg')
 
 # Улучшение качества фотографии
 enhanced_image = enhance_image(target)
